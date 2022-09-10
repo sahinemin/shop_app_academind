@@ -24,18 +24,23 @@ class UserProductScreen extends StatelessWidget {
         ],
       ),
       drawer: const AppDrawer(),
-      body: SafeArea(
-        child: Consumer<Products>(
-          builder: (context, products, child) => ListView.builder(
-            itemCount: products.items.length,
-            itemBuilder: (_, i) => Column(
-              children: [
-                UserProductItem(
-                    id: products.items[i].id,
-                    title: products.items[i].title,
-                    imageUrl: products.items[i].imageUrl),
-                const Divider(),
-              ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Provider.of<Products>(context, listen: false).fetchProducts();
+        },
+        child: SafeArea(
+          child: Consumer<Products>(
+            builder: (context, products, child) => ListView.builder(
+              itemCount: products.items.length,
+              itemBuilder: (_, i) => Column(
+                children: [
+                  UserProductItem(
+                      id: products.items[i].id,
+                      title: products.items[i].title,
+                      imageUrl: products.items[i].imageUrl),
+                  const Divider(),
+                ],
+              ),
             ),
           ),
         ),

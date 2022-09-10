@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart' as http;
+import 'package:shop_app_academind/models/http_exception.dart';
 
 class Product with ChangeNotifier {
   final String id;
@@ -16,8 +20,22 @@ class Product with ChangeNotifier {
       required this.imageUrl,
       this.isFavorite = false});
 
-  void toggleFavorite() {
+  Future<void> toggleFavorite() async {
+    final bool oldStatus = isFavorite;
     isFavorite = !isFavorite;
+    //notifyListeners();
+    final Uri url = Uri.parse(
+        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json");
+    try {
+      final http.Response response =
+          await http.patch(url, body: json.encode({"isFavorite": isFavorite}));
+      if (response.statusCode >= 400) {
+        const HttpException('Couldnt update');
+        isFavorite = oldStatus;
+      }
+    } catch (e) {
+      isFavorite = oldStatus;
+    }
     notifyListeners();
   }
 }

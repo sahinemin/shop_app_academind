@@ -8,7 +8,6 @@ import '../providers/cart.dart';
 class CartScreen extends StatelessWidget {
   static const routeName = '/cart';
   const CartScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,16 +38,8 @@ class CartScreen extends StatelessWidget {
                       ),
                     ),
                     Consumer<Cart>(
-                      builder: (context, cart, child) => TextButton(
-                          onPressed: () {
-                            Provider.of<Orders>(context, listen: false)
-                                .addOrder(cart.items.values.toList(),
-                                    cart.totalAmount);
-                            cart.clear();
-                          },
-                          child: const Text(
-                            'ORDER NOW',
-                          )),
+                      builder: (context, cart, child) =>
+                          OrderButton(cart: cart),
                     )
                   ],
                 ),
@@ -72,5 +63,43 @@ class CartScreen extends StatelessWidget {
             ),
           ],
         ));
+  }
+}
+
+class OrderButton extends StatefulWidget {
+  final Cart cart;
+  const OrderButton({
+    required this.cart,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<OrderButton> createState() => _OrderButtonState();
+}
+
+class _OrderButtonState extends State<OrderButton> {
+  // ignore: prefer_final_fields
+  bool _isLoading = false;
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+        onPressed: (widget.cart.totalAmount <= 0 || _isLoading)
+            ? null
+            : () async {
+                setState(() {
+                  _isLoading = true;
+                });
+                await Provider.of<Orders>(context, listen: false).addOrder(
+                    widget.cart.items.values.toList(), widget.cart.totalAmount);
+                widget.cart.clear();
+                setState(() {
+                  _isLoading = false;
+                });
+              },
+        child: !_isLoading
+            ? const Text(
+                'ORDER NOW',
+              )
+            : const CircularProgressIndicator());
   }
 }
