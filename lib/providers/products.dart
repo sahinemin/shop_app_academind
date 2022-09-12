@@ -5,6 +5,10 @@ import 'dart:convert';
 import '../models/http_exception.dart';
 
 class Products with ChangeNotifier {
+  // ignore: prefer_typing_uninitialized_variables
+  var authToken;
+  // ignore: prefer_typing_uninitialized_variables
+  var userId;
   // ignore: prefer_final_fields
   List<Product> _items = [
     /*
@@ -42,6 +46,8 @@ class Products with ChangeNotifier {
     ),*/
   ];
 
+  Products(this.authToken, this.userId, this._items);
+
   List<Product> get items {
     return [..._items];
   }
@@ -54,36 +60,46 @@ class Products with ChangeNotifier {
     return _items.firstWhere(((prod) => prod.id == id));
   }
 
-  Future<void> fetchProducts() async {
-    final Uri url = Uri.parse(
-        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products.json");
+  Future<void> fetchProducts([bool filterByUser = false]) async {
+    final String filterString =
+        filterByUser ? "" : '&orderBy="creatorId"&equalTo="$userId"';
+    Uri url = Uri.parse(
+        'https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products.json?auth=$authToken$filterString');
     try {
       final http.Response response = await http.get(
         url,
       );
+      url = Uri.parse(
+          "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/userFavorites/$userId.json?auth=$authToken");
+      final favoriteResponse = await http.get(url);
+      final favoriteData = jsonDecode(favoriteResponse.body);
       final List<Product> fetchedData = [];
       //_items = json.decode(response.body);
       final Map<String, dynamic> decoded = json.decode(response.body);
       decoded.forEach((prodId, prodData) {
-        fetchedData.add(Product(
+        fetchedData.add(
+          Product(
             id: prodId,
             title: prodData['title'],
             description: prodData['description'],
             price: prodData['price'],
             imageUrl: prodData['imageUrl'],
-            isFavorite: prodData['isFavorite']));
+            isFavorite:
+                favoriteData == null ? false : favoriteData[prodId] ?? false,
+          ),
+        );
       });
       _items = fetchedData;
       notifyListeners();
       //Product product = Product(id: response.body, title: title, description: description, price: price, imageUrl: imageUrl)
     } catch (error) {
-      null;
+      rethrow;
     }
   }
 
   Future<void> addProduct(Product product) async {
     final Uri url = Uri.parse(
-        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products.json");
+        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products.json?auth=$authToken");
     try {
       final http.Response response = await http.post(url,
           body: json.encode({
@@ -91,7 +107,7 @@ class Products with ChangeNotifier {
             "description": product.description,
             "imageUrl": product.imageUrl,
             "price": product.price,
-            "isFavorite": product.isFavorite
+            //"isFavorite": product.isFavorite
           }));
       final Product productData = Product(
         id: json.decode(response.body)['name'] as String,
@@ -118,7 +134,7 @@ class Products with ChangeNotifier {
     final prodIndex = _items.indexWhere((element) => element.id == id);
     if (prodIndex >= 0) {
       final Uri url = Uri.parse(
-          "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json");
+          "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json?auth=$authToken");
       try {
         await http.patch(url,
             body: json.encode({
@@ -126,6 +142,7 @@ class Products with ChangeNotifier {
               'description': newProduct.description,
               'imageUrl': newProduct.imageUrl,
               'price': newProduct.price,
+              'creatorId': userId
             }));
         _items[prodIndex] = newProduct;
       } catch (e) {
@@ -137,7 +154,7 @@ class Products with ChangeNotifier {
 
   Future<void> deleteProduct(String id) async {
     final Uri url = Uri.parse(
-        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json");
+        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json?auth=$authToken");
     final int existingProductIndex = _items.indexWhere((prod) => prod.id == id);
     final Product existingProduct = _items[existingProductIndex];
     _items.removeAt(existingProductIndex);

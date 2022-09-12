@@ -10,6 +10,7 @@ import '../widgets/products_grid.dart';
 enum FilterOptions { favorites, all }
 
 class ProductOverview extends StatefulWidget {
+  static const routeName = '/productOverview';
   const ProductOverview({super.key});
 
   @override
@@ -31,6 +32,12 @@ class _ProductOverviewState extends State<ProductOverview> {
         if (mounted) {
           setState(() {
             _isLoading = false;
+          });
+        }
+      }).onError((error, stackTrace) {
+        if (mounted) {
+          setState(() {
+            _isLoading = true;
           });
         }
       });

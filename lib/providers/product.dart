@@ -20,15 +20,15 @@ class Product with ChangeNotifier {
       required this.imageUrl,
       this.isFavorite = false});
 
-  Future<void> toggleFavorite() async {
+  Future<void> toggleFavorite(String token, String userId) async {
     final bool oldStatus = isFavorite;
     isFavorite = !isFavorite;
     //notifyListeners();
     final Uri url = Uri.parse(
-        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/products/$id.json");
+        "https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/userFavorites/$userId/$id.json?auth=$token");
     try {
       final http.Response response =
-          await http.patch(url, body: json.encode({"isFavorite": isFavorite}));
+          await http.put(url, body: json.encode(isFavorite));
       if (response.statusCode >= 400) {
         const HttpException('Couldnt update');
         isFavorite = oldStatus;
