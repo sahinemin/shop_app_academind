@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_app_academind/helpers/custom_route.dart';
 import './providers/cart.dart';
 import './providers/products.dart';
 import './providers/auth.dart';
@@ -14,7 +15,12 @@ import './screens/products_overview.dart';
 import './widgets/splash_screen.dart';
 
 void main() {
-  final ThemeData theme = ThemeData(fontFamily: 'Lato');
+  final ThemeData theme = ThemeData(
+      fontFamily: 'Lato',
+      pageTransitionsTheme: PageTransitionsTheme(builders: {
+        TargetPlatform.android: CustomPageTransitionBuilder(),
+        TargetPlatform.iOS: CustomPageTransitionBuilder()
+      }));
   runApp(
     MultiProvider(
         providers: [
@@ -32,7 +38,9 @@ void main() {
           ChangeNotifierProxyProvider<Auth, Orders>(
               create: (context) => Orders("", "", []),
               update: (context, auth, previousOrders) => Orders(
-                  auth.token, auth.userId, previousOrders?.orders ?? [])),
+                  auth.token ?? '',
+                  auth.userId ?? '',
+                  previousOrders?.orders ?? [])),
         ],
         child: Consumer<Auth>(
           builder: (context, auth, child) {

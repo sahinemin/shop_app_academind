@@ -57,10 +57,11 @@ class Orders with ChangeNotifier {
 
   Future<void> fetchOrders() async {
     final url = Uri.parse(
-        'https://flutter-update.firebaseio.com/orders.json?auth=$authToken');
+        'https://shopappacademind-a96ee-default-rtdb.europe-west1.firebasedatabase.app/orders/$userId.json?auth=$authToken');
     final response = await http.get(url);
     final List<OrderItem> loadedOrders = [];
     final Map<String, dynamic> extractedData = json.decode(response.body);
+    //print(extractedData);
     if (extractedData.isEmpty) {
       return;
     }
